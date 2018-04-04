@@ -87,6 +87,13 @@ AC_ARG_ENABLE([kvm],
       [enable_kvm=yes])
 AM_CONDITIONAL([WITH_KVM], [test x"$enable_kvm" = xyes])
 
+AC_ARG_ENABLE([bareflank],
+      [AS_HELP_STRING([--disable-bareflank],
+         [Support memory introspection with live Bareflank VMs (default is yes)])],
+      [enable_bareflank=$enableval],
+      [enable_bareflank=yes])
+AM_CONDITIONAL([WITH_XEN], [test x"$enable_bareflank" = xyes])
+
 AC_ARG_ENABLE([shm_snapshot],
       [AS_HELP_STRING([--disable-shm-snapshot],
          [Support shm-snapshot with KVM VMs (Xen is pending) (default is no)])],
@@ -157,7 +164,7 @@ AM_CONDITIONAL([DEBUG], [test x$debug = xyes])
 
 AC_ARG_ENABLE([rekall_profiles],
   [AS_HELP_STRING([--enable-rekall-profiles],
-    [Enable using Rekall's JSON profiles])],
+    [Enable using Rekalls JSON profiles])],
   [rekall="$enableval"],
   [rekall="yes"])
 
@@ -241,6 +248,11 @@ AC_SUBST([GLIB_LIBS])
 [if test "$enable_file" = "yes"]
 [then]
     AC_DEFINE([ENABLE_FILE], [1], [Define to 1 to enable file support.])
+[fi]
+
+[if test "$enable_bareflank" = "yes"]
+[then]
+    AC_DEFINE([ENABLE_BAREFLANK], [1], [Define to 1 to enable Bareflank support.])
 [fi]
 
 [if test "$enable_windows" = "yes"]
@@ -385,6 +397,7 @@ Feature         | Option
 Xen Support     | --enable-xen=$enable_xen
 KVM Support     | --enable-kvm=$enable_kvm
 File Support    | --enable-file=$enable_file
+Bareflank       | --enable-bareflank=$enable_bareflank
 Shm-snapshot    | --enable-shm-snapshot=$enable_shm_snapshot
 Rekall profiles | --enable-rekall-profiles=$rekall
 ----------------|---------------------------
