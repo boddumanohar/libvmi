@@ -7,8 +7,10 @@ bareflank_destroy(
 {
     barelfank_instance_t *bareflank = bareflank_get_instance(vmi);
 		if (!bareflank) return;
-		//destroy_domain_socket(bareflank);
-		dlclose(bareflank->handle);
+
+		// normally xen & kvm just destroy the handle to the library.
+		// so we just free the memory allocated to that pointer.
+		free(bareflank);
 }
 
 //----------------------------------------------------------------------------
@@ -29,9 +31,7 @@ bareflank_init(
     if ( VMI_FAILURE == get_bareflank_status(bareflank) )
         return VMI_FAILURE;
 
-		uint32_t id = get_current_vcpu_id();	
-		bareflank->vcpuid = id;
-    vmi->driver.driver_data = (void*)bareflank;
+		vmi->driver.driver_data = (void*)bareflank;
 
     return VMI_SUCCESS;
 }
@@ -40,7 +40,7 @@ bareflank_init(
 // whether they are correct or not. 
 
 status_t
-kvm_test()
+bareflank_test()
 {
     struct vmi_instance _vmi = {0};
     vmi_instance_t vmi = &_vmi;
@@ -50,20 +50,59 @@ kvm_test()
 
 		// TODO: Best way to way to validate a VM in bareflank. 
 
-    /*if (name) {
-        domainid = bareflank_get_id_from_name(vmi, name);
-        if (domainid != VMI_INVALID_DOMID)
-            return VMI_SUCCESS;
-    }*/
+		bareflank_destroy(vmi);
+    return VMI_SUCCESS;
+}
 
-    /*if (domainid != VMI_INVALID_DOMID) {
-        char *_name = NULL;
-        status_t rc = kvm_get_name_from_id(vmi, domainid, &_name);
-        free(_name);
-		*/
-        if ( VMI_SUCCESS == rc )
-            return rc;
+status_t
+bareflank_init_vmi(
+    vmi_instance_t vmi,
+    uint32_t init_flags,
+    void *init_data)
+{
+    status_t ret = VMI_FAILURE;
+    bareflank_instance_t *bareflank = bareflank_get_instance(vmi);
+    int rc;
 
-    bareflank_destroy(vmi);
-    return VMI_FAILURE;
+    /* TODO: record the count of VCPUs used by this instance and possibly
+			 add it to the bareflank instance or we may create a info struct 
+			 which has all the details of the VM */
+
+		/* for now, bareflank only uses only 1 vcpu */
+
+		// initialize the fields of bareflank instance
+		int ret = get_current_vcpu_id();
+		if (ret > 0) {
+			bareflank->vcpuid = ret
+		}
+		else {
+			goto _bail;	
+		}
+
+		int ret = get_type_info();
+		if( ret > 0) {
+			bareflank->type = ret;
+		}
+		else {
+			goto _bail;	
+		}
+
+_bail:
+    return ret;
+}
+
+void
+bareflank_destroy(
+    vmi_instance_t vmi)
+{
+    bareflank_instance_t *bareflank = bareflank_get_instance(vmi);
+
+    if (!bareflank) return;
+
+		/*TODO: Destroy events if type is HVM */
+
+    g_free(bareflank->name);
+    g_free(bareflank);
+
+    vmi->driver.driver_data = NULL;
 }

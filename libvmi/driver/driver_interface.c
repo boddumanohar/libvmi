@@ -123,7 +123,7 @@ status_t driver_init(vmi_instance_t vmi,
             break;
 #endif
 #if ENABLE_BAREFLANK == 1
-        case VMI_KVM:
+        case VMI_BAREFLANK:
             rc = driver_bareflank_setup(vmi);
             break;
 #endif
