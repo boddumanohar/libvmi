@@ -1,3 +1,6 @@
+#ifndef BAREFLANK_DRIVER_H
+#define BAREFLANK_DRIVER_H
+
 // Action: get current VM type info
 
 // identify which vm to go and give vmcall to that vm.
@@ -11,3 +14,5 @@ uint32_t get_current_vcpu_id();
 
 // just tells whether bareflank is reachable or not
 status_t get_bareflank_status();
+
+#endif

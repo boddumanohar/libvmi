@@ -1,5 +1,6 @@
 #include "../../driver/driver_interface.h"
 #include "../../driver/memory_cache.h"
+#include "hypercall.h"
 
 void
 bareflank_destroy(
@@ -8,13 +9,14 @@ bareflank_destroy(
     barelfank_instance_t *bareflank = bareflank_get_instance(vmi);
 		if (!bareflank) return;
 
-		// normally xen & kvm just destroy the handle to the library.
-		// so we just free the memory allocated to that pointer.
-		free(bareflank);
-}
+		// normally xen & kvm just destroy the handle to the library. since we
+		// don't have a library we just free the memory allocated to that pointer.
 
-//----------------------------------------------------------------------------
-// General Interface Functions (1-1 mapping to driver_* function)
+    //g_free(bareflank->name);
+    g_free(bareflank);
+
+    vmi->driver.driver_data = NULL;
+}
 
 status_t
 bareflank_init(
@@ -23,11 +25,9 @@ bareflank_init(
     void *UNUSED(init_data))
 {
     bareflank_instance_t *bareflank = g_malloc0(sizeof(bareflank_instance_t));
-		// size bareflank accepts VMCALL from user space on Intel based systems,
-		// we don't need to create an wrapper.
-		// So, here we just fetch status bareflank. If we are able to get some
-		// information, then we add it to driver.driver_data otherwise we return
-		// VMI_FAILURE 
+
+		// since bareflank accepts VMCALL from user space on Intel based systems,
+		// we don't need to create an wrapper. So, here we just get bareflank status.
     if ( VMI_FAILURE == get_bareflank_status(bareflank) )
         return VMI_FAILURE;
 
@@ -64,11 +64,7 @@ bareflank_init_vmi(
     bareflank_instance_t *bareflank = bareflank_get_instance(vmi);
     int rc;
 
-    /* TODO: record the count of VCPUs used by this instance and possibly
-			 add it to the bareflank instance or we may create a info struct 
-			 which has all the details of the VM */
-
-		/* for now, bareflank only uses only 1 vcpu */
+		// Each Bareflank VM uses only 1 vcpu
 
 		// initialize the fields of bareflank instance
 		int ret = get_current_vcpu_id();
@@ -91,18 +87,3 @@ _bail:
     return ret;
 }
 
-void
-bareflank_destroy(
-    vmi_instance_t vmi)
-{
-    bareflank_instance_t *bareflank = bareflank_get_instance(vmi);
-
-    if (!bareflank) return;
-
-		/*TODO: Destroy events if type is HVM */
-
-    g_free(bareflank->name);
-    g_free(bareflank);
-
-    vmi->driver.driver_data = NULL;
-}
