@@ -13,6 +13,6 @@ uint32_t get_type_info();
 uint32_t get_current_vcpu_id();
 
 // just tells whether bareflank is reachable or not
-extern int get_bareflank_status();
+long int get_bareflank_status();
 
 #endif

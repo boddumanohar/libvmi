@@ -8,8 +8,11 @@ uint32_t get_current_vcpu_id() {
 
 // returns VMI_FAILURE or VMI_SUCCESS
 
-status_t get_bareflank_status() {
+long int get_bareflank_status() {
 
+asm("vmcall");
+asm("movl $1, %eax");
+register unsigned long i asm("eax");
 
 }
 

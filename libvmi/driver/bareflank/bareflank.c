@@ -1,7 +1,8 @@
-#include "../../driver/driver_interface.h"
-#include "../../driver/memory_cache.h"
-#include "hypercall.h"
-
+#include "driver/driver_interface.h"
+#include "driver/memory_cache.h"
+#include "driver/bareflank/hypercall.h"
+#include "driver/bareflank/bareflank.h"
+#include "driver/bareflank/bareflank_private.h"
 void
 bareflank_destroy(
     vmi_instance_t vmi)
@@ -28,8 +29,10 @@ bareflank_init(
 
 		// since bareflank accepts VMCALL from user space on Intel based systems,
 		// we don't need to create an wrapper. So, here we just get bareflank status.
-    if ( VMI_FAILURE == get_bareflank_status(bareflank) )
+    if ( 1  != get_bareflank_status(bareflank) )
         return VMI_FAILURE;
+
+		dbprint(VMI_DEBUG_DRIVER, "running in bareflank");
 
 		vmi->driver.driver_data = (void*)bareflank;
 
