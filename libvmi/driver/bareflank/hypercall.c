@@ -1,6 +1,6 @@
 #include "hypercall.h"
 
-uint32_t get_current_vcpu_id() {
+status_t get_current_vcpu_id() {
 
 // read the value of cpuid from the r1 register.
 
@@ -14,8 +14,9 @@ asm("vmcall");
 asm("movl $1, %eax");
 register unsigned long i asm("eax");
 
+return i;
 }
 
-uint32_t get_type_info() {
+status_t get_type_info() {
 
 }

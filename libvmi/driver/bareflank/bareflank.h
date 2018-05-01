@@ -1,6 +1,8 @@
 #ifndef BAREFLANK_DRIVER_H
 #define BAREFLANK_DRIVER_H
 
+#include "libvmi.h"
+
 status_t bareflank_init(
     vmi_instance_t vmi,
     uint32_t init_flags,

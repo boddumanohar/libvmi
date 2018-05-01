@@ -3,6 +3,8 @@
 
 #define _GNU_SOURCE
 
+#include "private.h"
+
 typedef struct bareflank_instance {
 
     //char *name; no concept of name for now
@@ -21,7 +23,7 @@ static inline
 bareflank_instance_t *bareflank_get_instance(
     vmi_instance_t vmi)
 {
-    return ((xen_instance_t *) vmi->driver.driver_data);
+    return ((bareflank_instance_t *) vmi->driver.driver_data);
 }
 
 #endif /* BAREFLANK_PRIVATE_H */

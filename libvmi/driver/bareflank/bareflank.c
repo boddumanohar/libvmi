@@ -1,13 +1,15 @@
+#include "private.h"
 #include "driver/driver_interface.h"
 #include "driver/memory_cache.h"
+#include "driver/bareflank/bareflank_private.h"
 #include "driver/bareflank/hypercall.h"
 #include "driver/bareflank/bareflank.h"
-#include "driver/bareflank/bareflank_private.h"
+
 void
 bareflank_destroy(
     vmi_instance_t vmi)
 {
-    barelfank_instance_t *bareflank = bareflank_get_instance(vmi);
+    bareflank_instance_t *bareflank = bareflank_get_instance(vmi);
 		if (!bareflank) return;
 
 		// normally xen & kvm just destroy the handle to the library. since we
@@ -65,20 +67,19 @@ bareflank_init_vmi(
 {
     status_t ret = VMI_FAILURE;
     bareflank_instance_t *bareflank = bareflank_get_instance(vmi);
-    int rc;
 
 		// Each Bareflank VM uses only 1 vcpu
 
 		// initialize the fields of bareflank instance
-		int ret = get_current_vcpu_id();
+		ret = get_current_vcpu_id();
 		if (ret > 0) {
-			bareflank->vcpuid = ret
+			bareflank->vcpuid = ret;
 		}
 		else {
 			goto _bail;	
 		}
 
-		int ret = get_type_info();
+		ret = get_type_info();
 		if( ret > 0) {
 			bareflank->type = ret;
 		}
