@@ -9,7 +9,7 @@ typedef struct bareflank_instance {
 
     //char *name; no concept of name for now
 
-    uint64_t vcpuid; /**< VM that we are accessing */
+    //uint64_t vcpuid; /**< VM that we are accessing */
 
     //int major_version;  /**< Major version of Bareflank LibMVI is running on */
 

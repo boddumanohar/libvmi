@@ -88,6 +88,12 @@ drivers     += driver/xen/altp2m.c \
                driver/xen/libxs_wrapper.h
 endif
 
+if WITH_BAREFLANK
+drivers     += driver/bareflank/bareflank.h \
+               driver/bareflank/bareflank_private.h \
+               driver/bareflank/bareflank.c
+endif
+
 os =
 if WINDOWS
 h_public    += peparse.h

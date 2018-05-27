@@ -479,6 +479,11 @@ static inline status_t driver_sanity_check(vmi_mode_t mode)
             return VMI_FAILURE;
 #endif
             break;
+        case VMI_BAREFLANK:
+#if ENABLE_BAREFLANK != 1
+            return VMI_FAILURE;
+#endif
+            break;
         default:
             return VMI_FAILURE;
     };
@@ -548,12 +553,12 @@ status_t vmi_init(
     }
 
     /* get the memory size */
-    if (driver_get_memsize(_vmi, &_vmi->allocated_ram_size, &_vmi->max_physical_address) == VMI_FAILURE) {
+    /*if (driver_get_memsize(_vmi, &_vmi->allocated_ram_size, &_vmi->max_physical_address) == VMI_FAILURE) {
         if ( error )
             *error = VMI_INIT_ERROR_DRIVER;
 
         goto error_exit;
-    }
+    }*/
 
     /* setup the caches */
     pid_cache_init(_vmi);

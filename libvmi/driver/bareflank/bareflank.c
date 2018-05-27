@@ -1,9 +1,243 @@
+#include <stdlib.h>
+#include <json-c/json.h>
+
 #include "private.h"
-#include "driver/driver_interface.h"
+#include "driver/driver_wrapper.h"
 #include "driver/memory_cache.h"
-#include "driver/bareflank/bareflank_private.h"
-#include "driver/bareflank/hypercall.h"
 #include "driver/bareflank/bareflank.h"
+#include "driver/bareflank/bareflank_private.h"
+
+typedef enum hcall{ // to check hypercall status
+	HCALL_SUCCESS,
+	HCALL_FAILURE
+}hcall_t;
+
+// Bareflank libvmi ABI:
+// Use eax to send vmcall ID
+// use rdi to send address of buffer
+// use rsi to send buffer size
+
+typedef struct json_object json_object;
+
+hcall_t h_get_vcpuregs(unsigned long vcpu, json_object **jobj)
+{
+	
+	hcall_t ret = HCALL_SUCCESS;  // TODO: when should I return failure?
+	size_t size = 4096; // 1 page // TODO:replace 4096 with system page size
+	void *buffer = malloc(size); // TODO: is malloc the best way to alloc mem to buffer?
+
+
+	asm("movq %0, %%rdi"
+		  :
+      :"a"(buffer)
+      :"rdi"
+      );
+
+  asm("movq %0, %%rsi"
+      :
+      :"a"(size)
+      :"rsi"
+      );
+
+	//TODO: set cpu affinity. 
+
+	asm("mov $2, %eax");
+	asm("vmcall");
+
+	//TODO: set cpu affinity to normal mode
+
+	uint64_t status;	
+	asm( "movq %%rdx, %0" // using rdx to return hypercall status
+      : "=a" (status)
+      );
+
+	//TODO:
+	//if (status != 1){
+		// some went wrong during hypercall
+	//	return ret;
+	//}
+
+	*jobj = json_tokener_parse((char *)buffer);
+	free(buffer);
+	return ret;
+}
+
+static uint64_t parse_reg_value(const char *reg, json_object *root)
+{
+	// parse the json and get the value of the key
+	
+	json_object *return_obj = NULL;
+	json_object_object_get_ex(root,reg, &return_obj);
+	return json_object_get_int64(return_obj);
+
+}
+
+static status_t getkeyfrom_json(json_object *root, reg_t reg, uint64_t *value) {
+
+	status_t ret = VMI_SUCCESS;
+	//TODO: get segment registers
+	switch (reg) {
+					case CR0:
+							*value = parse_reg_value("CR0", root);
+							break;
+					case CR2:
+							*value = parse_reg_value("CR2", root);
+							break;
+					case CR3:
+							*value = parse_reg_value("CR3", root);
+							break;
+					case CR4:
+							*value = parse_reg_value("CR4", root);
+							break;
+					case DR0:
+							*value = parse_reg_value("DR0", root);
+							break;
+					case DR1:
+							*value = parse_reg_value("DR1", root);
+							break;
+					case DR2:
+							*value = parse_reg_value("DR2", root);
+							break;
+					case DR3:
+							*value = parse_reg_value("DR3", root);
+							break;
+					case DR6:
+							*value = parse_reg_value("DR6", root);
+							break;
+					case DR7:
+							*value = parse_reg_value("DR7", root);
+							break;
+						case RAX:
+								*value = parse_reg_value("RAX", root);
+								break;
+						case RBX:
+								*value = parse_reg_value("RBX", root);
+								break;
+						case RCX:
+								*value = parse_reg_value("RCX", root);
+								break;
+						case RDX:
+								*value = parse_reg_value("RDX", root);
+								break;
+						case RBP:
+								*value = parse_reg_value("RBP", root);
+								break;
+						case RSI:
+								*value = parse_reg_value("RSI", root);
+								break;
+						case RDI:
+								*value = parse_reg_value("RDI", root);
+								break;
+						case RSP:
+								*value = parse_reg_value("RSP", root);
+								break;
+						case R8:
+								*value = parse_reg_value("R08", root);
+								break;
+						case R9:
+								*value = parse_reg_value("R09", root);
+								break;
+						case R10:
+								*value = parse_reg_value("R10", root);
+								break;
+						case R11:
+								*value = parse_reg_value("R11", root);
+								break;
+						case R12:
+								*value = parse_reg_value("R12", root);
+								break;
+						case R13:
+								*value = parse_reg_value("R13", root);
+								break;
+						case R14:
+								*value = parse_reg_value("R14", root);
+								break;
+						case R15:
+								*value = parse_reg_value("R15", root);
+								break;
+						case RIP:
+								*value = parse_reg_value("RIP", root);
+								break;
+						case RFLAGS:
+								*value = parse_reg_value("RFL", root);
+								break;
+						default:
+								ret = VMI_FAILURE;
+								break;
+							//}
+						//} 
+
+			}
+	return ret;
+	
+}
+
+
+
+status_t bareflank_get_vcpureg(
+		vmi_instance_t vmi,
+		uint64_t *value,
+		reg_t reg,
+		unsigned long vcpu)
+{
+	status_t ret = VMI_SUCCESS;
+	
+	json_object *j_regs = NULL;
+	if (HCALL_FAILURE == h_get_vcpuregs(vcpu, &j_regs))	
+
+	if (j_regs == NULL) {
+		errprint("json object is null\n");
+		return VMI_FAILURE;
+	}
+
+	if (VMI_SUCCESS != getkeyfrom_json(j_regs, reg, value))
+			return VMI_FAILURE;
+
+	return ret; 
+}
+
+status_t
+bareflank_get_vcpuregs(
+    vmi_instance_t vmi,
+    registers_t *regs,
+    unsigned long vcpu)
+{
+	status_t ret = VMI_SUCCESS;
+
+  json_object *j_regs = NULL;
+	if (HCALL_FAILURE == h_get_vcpuregs(vcpu, &j_regs))	{
+		errprint("failed to registers of of VCPU %lu \n", vcpu);
+		return VMI_FAILURE;
+	} 
+
+	if (j_regs == NULL) 
+		errprint("json object is null\n");
+
+    regs->x86.rax = parse_reg_value("RAX",j_regs);
+    regs->x86.rbx = parse_reg_value("RBX",j_regs);
+    regs->x86.rcx = parse_reg_value("RCX",j_regs);
+    regs->x86.rdx = parse_reg_value("RDX",j_regs);
+    regs->x86.rbp = parse_reg_value("RBP",j_regs);
+    regs->x86.rsi = parse_reg_value("RSI",j_regs);
+    regs->x86.rdi = parse_reg_value("RDI",j_regs);
+    regs->x86.rsp = parse_reg_value("RSP",j_regs);
+    regs->x86.r8  = parse_reg_value("R08",j_regs);
+    regs->x86.r9  = parse_reg_value("R09",j_regs);
+    regs->x86.r10 = parse_reg_value("R10",j_regs);
+    regs->x86.r11 = parse_reg_value("R11",j_regs);
+    regs->x86.r12 = parse_reg_value("R12",j_regs);
+    regs->x86.r13 = parse_reg_value("R13",j_regs);
+    regs->x86.r14 = parse_reg_value("R14",j_regs);
+    regs->x86.r15 = parse_reg_value("R15",j_regs);
+    regs->x86.rip = parse_reg_value("RIP",j_regs);
+    regs->x86.cr0 = parse_reg_value("CR0",j_regs);
+    regs->x86.cr2 = parse_reg_value("CR2",j_regs);
+    regs->x86.cr3 = parse_reg_value("CR3",j_regs);
+    regs->x86.cr4 = parse_reg_value("CR4",j_regs);
+    regs->x86.dr7 = parse_reg_value("RIP",j_regs);
+
+		return VMI_SUCCESS;
+}
 
 void
 bareflank_destroy(
@@ -15,10 +249,15 @@ bareflank_destroy(
 		// normally xen & kvm just destroy the handle to the library. since we
 		// don't have a library we just free the memory allocated to that pointer.
 
-    //g_free(bareflank->name);
-    g_free(bareflank);
+    //g_free(bareflank);
 
     vmi->driver.driver_data = NULL;
+}
+
+hcall_t h_get_bareflank_status() {
+	asm("movl $1, %eax");
+	asm("vmcall"); // TODO:if VMM is absent, the program crashes saying illegal instruction
+	return HCALL_SUCCESS; 
 }
 
 status_t
@@ -31,7 +270,7 @@ bareflank_init(
 
 		// since bareflank accepts VMCALL from user space on Intel based systems,
 		// we don't need to create an wrapper. So, here we just get bareflank status.
-    if ( 1  != get_bareflank_status(bareflank) )
+    if ( HCALL_SUCCESS  != h_get_bareflank_status() )
         return VMI_FAILURE;
 
 		dbprint(VMI_DEBUG_DRIVER, "running in bareflank");
@@ -45,15 +284,13 @@ bareflank_init(
 // whether they are correct or not. 
 
 status_t
-bareflank_test()
+bareflank_test(uint64_t domainid, const char *name)
 {
     struct vmi_instance _vmi = {0};
     vmi_instance_t vmi = &_vmi;
 
     if ( VMI_FAILURE == bareflank_init(vmi, 0, NULL) )
         return VMI_FAILURE;
-
-		// TODO: Best way to way to validate a VM in bareflank. 
 
 		bareflank_destroy(vmi);
     return VMI_SUCCESS;
@@ -62,32 +299,16 @@ bareflank_test()
 status_t
 bareflank_init_vmi(
     vmi_instance_t vmi,
-    uint32_t init_flags,
-    void *init_data)
+    uint32_t UNUSED(init_flags),
+    void *UNUSED(init_data))
 {
     status_t ret = VMI_FAILURE;
-    bareflank_instance_t *bareflank = bareflank_get_instance(vmi);
+    //bareflank_instance_t *bareflank = bareflank_get_instance(vmi);
 
 		// Each Bareflank VM uses only 1 vcpu
 
-		// initialize the fields of bareflank instance
-		ret = get_current_vcpu_id();
-		if (ret > 0) {
-			bareflank->vcpuid = ret;
-		}
-		else {
-			goto _bail;	
-		}
-
-		ret = get_type_info();
-		if( ret > 0) {
-			bareflank->type = ret;
-		}
-		else {
-			goto _bail;	
-		}
-
-_bail:
-    return ret;
+		//TODO: initialize the fields of bareflank instance
+		ret = VMI_SUCCESS;
+		return ret;	
 }
 

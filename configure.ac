@@ -92,7 +92,7 @@ AC_ARG_ENABLE([bareflank],
          [Support memory introspection with live Bareflank VMs (default is yes)])],
       [enable_bareflank=$enableval],
       [enable_bareflank=yes])
-AM_CONDITIONAL([WITH_XEN], [test x"$enable_bareflank" = xyes])
+AM_CONDITIONAL([WITH_BAREFLANK], [test x"$enable_bareflank" = xyes])
 
 AC_ARG_ENABLE([shm_snapshot],
       [AS_HELP_STRING([--disable-shm-snapshot],
@@ -164,7 +164,7 @@ AM_CONDITIONAL([DEBUG], [test x$debug = xyes])
 
 AC_ARG_ENABLE([rekall_profiles],
   [AS_HELP_STRING([--enable-rekall-profiles],
-    [Enable using Rekalls JSON profiles])],
+    [Enable using Rekall's JSON profiles])],
   [rekall="$enableval"],
   [rekall="yes"])
 

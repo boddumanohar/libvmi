@@ -73,7 +73,7 @@ typedef enum vm_type {
  */
 struct vmi_instance {
 
-    vmi_mode_t mode;        /**< VMI_FILE, VMI_XEN, VMI_KVM */
+    vmi_mode_t mode;        /**< VMI_FILE, VMI_XEN, VMI_KVM, VMI_BAREFLANK */
 
     driver_interface_t driver; /**< The driver supporting the chosen mode */
 
