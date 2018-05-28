@@ -262,7 +262,7 @@ bareflank_destroy(
 		// normally xen & kvm just destroy the handle to the library. since we
 		// don't have a library we just free the memory allocated to that pointer.
 
-    //g_free(bareflank);
+    g_free(bareflank);
 
     vmi->driver.driver_data = NULL;
 }
@@ -283,8 +283,13 @@ bareflank_init(
 
 		// since bareflank accepts VMCALL from user space on Intel based systems,
 		// we don't need to create an wrapper. So, here we just get bareflank status.
-    if ( HCALL_SUCCESS  != h_get_bareflank_status() )
+
+		errprint("");
+
+    if ( HCALL_SUCCESS  != h_get_bareflank_status() ) {
+				g_free(bareflank);
         return VMI_FAILURE;
+		}
 
 		dbprint(VMI_DEBUG_DRIVER, "running in bareflank");
 
@@ -316,8 +321,7 @@ bareflank_init_vmi(
     void *UNUSED(init_data))
 {
     status_t ret = VMI_FAILURE;
-    //bareflank_instance_t *bareflank = bareflank_get_instance(vmi);
-
+    bareflank_instance_t *bareflank = bareflank_get_instance(vmi);
 		// Each Bareflank VM uses only 1 vcpu
 
 		//TODO: initialize the fields of bareflank instance
