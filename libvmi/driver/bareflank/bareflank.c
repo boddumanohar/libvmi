@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <stdlib.h>
 #include <json-c/json.h>
 
@@ -6,6 +8,8 @@
 #include "driver/memory_cache.h"
 #include "driver/bareflank/bareflank.h"
 #include "driver/bareflank/bareflank_private.h"
+
+#include <sched.h>
 
 typedef enum hcall{ // to check hypercall status
 	HCALL_SUCCESS,
@@ -21,12 +25,21 @@ typedef struct json_object json_object;
 
 hcall_t h_get_vcpuregs(unsigned long vcpu, json_object **jobj)
 {
-	
-	hcall_t ret = HCALL_SUCCESS;  // TODO: when should I return failure?
+	cpu_set_t mask;
+	CPU_ZERO(&mask);
+	if (vcpu < 4) {
+		CPU_SET(vcpu,&mask);
+		size_t cpusetsize = sizeof(mask);
+		if(-1 == sched_setaffinity(0,cpusetsize,&mask)){
+			errprint("Could not set cpu affinity\n");
+			return HCALL_FAILURE;
+		}
+	}
+
+	hcall_t ret = HCALL_SUCCESS;
 	size_t size = 4096; // 1 page // TODO:replace 4096 with system page size
 	void *buffer = malloc(size); // TODO: is malloc the best way to alloc mem to buffer?
-
-
+	
 	asm("movq %0, %%rdi"
 		  :
       :"a"(buffer)
@@ -39,7 +52,7 @@ hcall_t h_get_vcpuregs(unsigned long vcpu, json_object **jobj)
       :"rsi"
       );
 
-	//TODO: set cpu affinity. 
+	
 
 	asm("mov $2, %eax");
 	asm("vmcall");
@@ -236,7 +249,7 @@ bareflank_get_vcpuregs(
     regs->x86.cr4 = parse_reg_value("CR4",j_regs);
     regs->x86.dr7 = parse_reg_value("RIP",j_regs);
 
-		return VMI_SUCCESS;
+		return ret;
 }
 
 void
