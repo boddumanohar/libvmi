@@ -223,6 +223,7 @@ driver_read_page(
     } else {
         dbprint
         (VMI_DEBUG_DRIVER, "WARNING: driver_read_page function not implemented.\n");
+        errprint("WARNING: driver_read_page function not implemented.\n");
         return NULL;
     }
 }

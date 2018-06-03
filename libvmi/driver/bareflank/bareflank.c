@@ -23,6 +23,34 @@ typedef enum hcall{ // to check hypercall status
 
 typedef struct json_object json_object;
 
+status_t bareflank_set_vcpureg(vmi_instance_t vmi, uint64_t value, reg_t reg, unsigned long vcpu)
+{
+	//set cpu affinity
+
+	char input[80];
+	switch(reg){
+		case RAX:
+			sprintf(input, "{\"RAX\":\"%ld\"}", value);	
+	case RBX:
+			sprintf(input, "{\"RBX\":\"%ld\"}", value);	
+	case RCX:
+				sprintf(input, "{\"RCX\":\"%ld\"}", value);	
+	case RDX:
+				sprintf(input, "{\"RDX\":\"%ld\"}", value);	
+	case RSI:
+				sprintf(input, "{\"RSI\":\"%ld\"}", value);	
+	case RDI:
+				sprintf(input, "{\"RDI\":\"%ld\"}", value);	
+	case RIP:
+				sprintf(input, "{\"RIP\":\"%ld\"}", value);	
+	}
+
+}
+status_t bareflank_set_vcpuregs(vmi_instance_t vmi, registers_t *regs, unsigned long vcpu)
+{	
+
+}
+
 hcall_t h_get_vcpuregs(unsigned long vcpu, json_object **jobj)
 {
 	cpu_set_t mask;
@@ -174,6 +202,9 @@ static status_t getkeyfrom_json(json_object *root, reg_t reg, uint64_t *value) {
 						case RFLAGS:
 								*value = parse_reg_value("RFL", root);
 								break;
+						case MSR_EFER:
+								*value = parse_reg_value("MSR_EFER", root);
+								break;
 						default:
 								ret = VMI_FAILURE;
 								break;
@@ -252,6 +283,32 @@ bareflank_get_vcpuregs(
 		return ret;
 }
 
+status_t
+bareflank_get_memsize(
+    vmi_instance_t vmi,
+    uint64_t *allocated_ram_size,
+    addr_t *maximum_physical_address)
+{
+    
+    *allocated_ram_size = 3941696 * 1024; // convert KBytes to bytes
+    
+		*maximum_physical_address = *allocated_ram_size;
+
+    return VMI_SUCCESS;
+}
+
+void *
+bareflank_read_page(
+    vmi_instance_t vmi,
+    addr_t page)
+{
+		errprint("inside bareflank read page\n");
+    addr_t paddr = page << vmi->page_shift;
+
+		errprint("done with read page \n");
+    return memory_cache_insert(vmi, paddr);
+}
+
 void
 bareflank_destroy(
     vmi_instance_t vmi)
@@ -314,18 +371,123 @@ bareflank_test(uint64_t domainid, const char *name)
     return VMI_SUCCESS;
 }
 
+
+void* h1_map_foreign_range(void *buffer, size_t size, size_t page_size, int prot, unsigned long pfn){
+	// TODO: Functions for mapping foreign domain's memory
+		asm("movq %0, %%rdi"
+		  :
+      :"a"(buffer)
+      :"rdi"
+      );
+
+  asm("movq %0, %%rsi"
+      :
+      :"a"(size)
+      :"rsi"
+      );
+
+	asm("movq %0, %%rbx"
+      :
+      :"a"(pfn)
+      :"rsi"
+      );
+
+asm("movq %0, %%rcx"
+      :
+      :"a"(page_size)
+      :"rsi"
+      );
+
+
+
+	asm("mov $4, %eax");
+	asm("vmcall");
+
+	//TODO: set cpu affinity to normal mode
+
+	asm( "movq %%rdx, %0" // using rdx to return hypercall status
+      : "=a" (buffer)
+      );
+
+	
+	return buffer;
+}
+
+void *
+bareflank_get_memory_pfn(
+    vmi_instance_t vmi,
+    addr_t pfn,
+    int prot)
+{
+		errprint("in side bareflank_get_memory_pfn\n");
+    //bareflank_instance_t *bareflank = bareflank_get_instance(vmi);
+    //void *memory = h_map_pfn(XC_PAGE_SIZE, prot, (unsigned long) pfn);
+			void *buffer = malloc(4096); //
+			void *size  = 4096; //
+			buffer = h1_map_foreign_range(buffer, size, 12, prot, (unsigned long) pfn);
+
+			char *output = buffer;
+			errprint("the output is %s\n",output);
+    if (NULL == buffer) {
+        dbprint(VMI_DEBUG_XEN, "--bareflank_get_memory_pfn failed on pfn=0x%"PRIx64"\n", pfn);
+        return NULL;
+    } else {
+        dbprint(VMI_DEBUG_XEN, "--bareflank_get_memory_pfn success on pfn=0x%"PRIx64"\n", pfn);
+    }
+		errprint("done with  bareflank_get_memory_pfn\n");
+
+    return buffer;
+}
+
+void *
+bareflank_get_memory(
+    vmi_instance_t vmi,
+    addr_t paddr,
+    uint32_t UNUSED(length))
+{
+    addr_t pfn = paddr >> vmi->page_shift;
+
+    return bareflank_get_memory_pfn(vmi, pfn, PROT_READ);
+}
+
+void
+bareflank_release_memory(
+    void *memory,
+    size_t length)
+{
+    //munmap(memory, length);
+		
+		free(memory);
+		errprint("done with release memory\n");
+		return;
+}
+/** 
+ * Setup Bareflank live mode.
+ */
+status_t
+bareflank_setup_live_mode(
+    vmi_instance_t vmi)
+{
+    dbprint(VMI_DEBUG_XEN, "--Bareflank: setup live mode\n");
+    memory_cache_destroy(vmi);
+    memory_cache_init(vmi, bareflank_get_memory, bareflank_release_memory, 0);
+    return VMI_SUCCESS;
+}
 status_t
 bareflank_init_vmi(
     vmi_instance_t vmi,
     uint32_t UNUSED(init_flags),
     void *UNUSED(init_data))
 {
-    status_t ret = VMI_FAILURE;
+    status_t ret = VMI_SUCCESS;
     bareflank_instance_t *bareflank = bareflank_get_instance(vmi);
 		// Each Bareflank VM uses only 1 vcpu
 
 		//TODO: initialize the fields of bareflank instance
-		ret = VMI_SUCCESS;
+    ret = bareflank_setup_live_mode(vmi);
+		if (VMI_FAILURE == ret)
+			return VMI_FAILURE;
+
 		return ret;	
 }
 

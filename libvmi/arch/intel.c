@@ -384,6 +384,7 @@ done:
 GSList* get_va_pages_nopae(vmi_instance_t vmi, addr_t dtb)
 {
 
+		errprint("nopae\n");
     addr_t pgd_location = dtb;
     uint8_t entry_size = 0x4;
 
@@ -456,6 +457,8 @@ GSList* get_va_pages_nopae(vmi_instance_t vmi, addr_t dtb)
 GSList* get_va_pages_pae(vmi_instance_t vmi, addr_t dtb)
 {
 
+		errprint("pae\n");
+		errprint("dtb is %lu \n",(uint64_t)dtb);
     uint32_t pdpi_base = get_pdptb(dtb);
     uint8_t entry_size = 0x8;
 
@@ -465,8 +468,10 @@ GSList* get_va_pages_pae(vmi_instance_t vmi, addr_t dtb)
     uint64_t *page_directory = NULL;
     uint64_t *page_table = NULL;
 
-    if (VMI_FAILURE == vmi_read_pa(vmi, pdpi_base, sizeof(pdpi_table), pdpi_table, NULL))
+    if (VMI_FAILURE == vmi_read_pa(vmi, pdpi_base, sizeof(pdpi_table), pdpi_table, NULL)){
+				errprint("1 falied with vmi_read_pa\n");
         return ret;
+		}
 
     page_directory = g_malloc(VMI_PS_4KB);
     if ( !page_directory )
@@ -489,11 +494,14 @@ GSList* get_va_pages_pae(vmi_instance_t vmi, addr_t dtb)
 
         uint64_t pde_location = pdba_base_pae(pdp_entry);
 
-        if (VMI_FAILURE == vmi_read_pa(vmi, pde_location, VMI_PS_4KB, page_directory, NULL))
+        if (VMI_FAILURE == vmi_read_pa(vmi, pde_location, VMI_PS_4KB, page_directory, NULL)) {
+						errprint("2 failed with vmi_read_pa\n");
             continue;
+				}
 
         uint32_t pd_index = 0;
         for (pd_index = 0; pd_index < PTRS_PER_PAE_PGD; pd_index++, pde_location += entry_size) {
+						errprint("inside for loop\n");
             uint64_t pd_base_va = pdp_base_va + (pd_index * PTRS_PER_PAE_PGD * PTRS_PER_PAE_PTE * entry_size);
 
             uint64_t pd_entry = page_directory[pd_index];
@@ -557,25 +565,31 @@ done:
 status_t intel_init(vmi_instance_t vmi)
 {
 
+		errprint(" Doing intel init\n");
     status_t ret = VMI_SUCCESS;
 
     if (!vmi->arch_interface) {
         vmi->arch_interface = g_malloc0(sizeof(struct arch_interface));
         if ( !vmi->arch_interface )
+						errprint(" arch_interface is null\n");
             return VMI_FAILURE;
     }
 
     if (vmi->page_mode == VMI_PM_LEGACY) {
         vmi->arch_interface->v2p = v2p_nopae;
         vmi->arch_interface->get_va_pages = get_va_pages_nopae;
+				errprint("get va pages nopae\n");
     } else if (vmi->page_mode == VMI_PM_PAE) {
         vmi->arch_interface->v2p = v2p_pae;
         vmi->arch_interface->get_va_pages = get_va_pages_pae;
+				errprint("get va pages pae\n");
     } else {
+				errprint(" We do not yet support IA32e paging \n");
         ret = VMI_FAILURE;
         g_free(vmi->arch_interface);
         vmi->arch_interface = NULL;
     }
 
+		errprint("intel init done\n");
     return ret;
 }

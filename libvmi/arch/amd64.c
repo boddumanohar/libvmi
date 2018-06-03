@@ -234,6 +234,7 @@ done:
 GSList* get_va_pages_ia32e(vmi_instance_t vmi, addr_t dtb)
 {
 
+		errprint("started get va pages ia32e\n");
     GSList *ret = NULL;
     uint8_t entry_size = 0x8;
 
@@ -249,20 +250,28 @@ GSList* get_va_pages_ia32e(vmi_instance_t vmi, addr_t dtb)
 
     addr_t pml4e_location = dtb & VMI_BIT_MASK(12,51);
 
-    if (VMI_FAILURE == vmi_read_pa(vmi, pml4e_location, VMI_PS_4KB, pml4_page, NULL))
-        goto done;
+			errprint("started at at 1\n");
 
+    if (VMI_FAILURE == vmi_read_pa(vmi, pml4e_location, VMI_PS_4KB, pml4_page, NULL)) {
+			errprint(" fail at 1\n");
+        goto done;
+		}
+
+			errprint("1: going further 1\n");
     uint64_t pml4e_index;
     for (pml4e_index = 0; pml4e_index < IA32E_ENTRIES_PER_PAGE; pml4e_index++, pml4e_location += entry_size) {
 
+				errprint("inside the for loop\n");
         uint64_t pml4e_value = pml4_page[pml4e_index];
 
         if (!ENTRY_PRESENT(vmi->x86.transition_pages, pml4e_value)) {
+						errprint("entry not present\n");
             continue;
         }
 
         uint64_t pdpte_location = pml4e_value & VMI_BIT_MASK(12,51);
 
+				errprint(" getting pdgpte_location \n");
         if (VMI_FAILURE == vmi_read_pa(vmi, pdpte_location, VMI_PS_4KB, pdpt_page, NULL))
             continue;
 
@@ -293,6 +302,8 @@ GSList* get_va_pages_ia32e(vmi_instance_t vmi, addr_t dtb)
 
             uint64_t pgd_location = pdpte_value & VMI_BIT_MASK(12,51);
 
+						
+						errprint(" getting pdgd_location \n");
             if (VMI_FAILURE == vmi_read_pa(vmi, pgd_location, VMI_PS_4KB, pgd_page, NULL))
                 continue;
 
@@ -368,6 +379,7 @@ done:
 status_t amd64_init(vmi_instance_t vmi)
 {
 
+	errprint("doing amd64_init \n");
     if (!vmi->arch_interface) {
         vmi->arch_interface = g_malloc0(sizeof(struct arch_interface));
         if ( !vmi->arch_interface )
@@ -375,6 +387,7 @@ status_t amd64_init(vmi_instance_t vmi)
     }
 
     vmi->arch_interface->v2p = v2p_ia32e;
+		errprint("arch_init is ia32e");
     vmi->arch_interface->get_va_pages = get_va_pages_ia32e;
 
     return VMI_SUCCESS;

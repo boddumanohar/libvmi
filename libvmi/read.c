@@ -41,6 +41,7 @@ vmi_read(
     void *buf,
     size_t *bytes_read)
 {
+		errprint("inside vmi read\n");
     status_t ret = VMI_FAILURE;
     unsigned char *memory = NULL;
     addr_t start_addr = 0;
@@ -52,11 +53,13 @@ vmi_read(
 
     if (NULL == ctx) {
         dbprint(VMI_DEBUG_READ, "--%s: ctx passed as NULL, returning without read\n", __FUNCTION__);
+        errprint("--%s: ctx passed as NULL, returning without read\n", __FUNCTION__);
         goto done;
     }
 
     if (NULL == buf) {
         dbprint(VMI_DEBUG_READ, "--%s: buf passed as NULL, returning without read\n", __FUNCTION__);
+        errprint(VMI_DEBUG_READ, "--%s: buf passed as NULL, returning without read\n", __FUNCTION__);
         goto done;
     }
 
@@ -65,32 +68,45 @@ vmi_read(
             start_addr = ctx->addr;
             break;
         case VMI_TM_KERNEL_SYMBOL:
-            if (!vmi->arch_interface || !vmi->os_interface || !vmi->kpgd)
+            if (!vmi->arch_interface || !vmi->os_interface || !vmi->kpgd) {
+								errprint("vmi-tm-kernel-symbol\n");
                 goto done;
+						}
 
             dtb = vmi->kpgd;
-            if ( VMI_FAILURE == vmi_translate_ksym2v(vmi, ctx->ksym, &start_addr) )
+            if ( VMI_FAILURE == vmi_translate_ksym2v(vmi, ctx->ksym, &start_addr) ) {
+								errprint("vmi-kpdg\n");
                 goto done;
+						}
             break;
         case VMI_TM_PROCESS_PID:
-            if (!vmi->arch_interface || !vmi->os_interface)
+            if (!vmi->arch_interface || !vmi->os_interface) {
+								errprint("vmi-tm-process-pid\n");
                 goto done;
+						}
 
             if ( !ctx->pid )
                 dtb = vmi->kpgd;
             else if (ctx->pid > 0) {
-                if ( VMI_FAILURE == vmi_pid_to_dtb(vmi, ctx->pid, &dtb) )
+                if ( VMI_FAILURE == vmi_pid_to_dtb(vmi, ctx->pid, &dtb) ) {
+										errprint("vmi-tm-process-pid\n");
                     goto done;
+								}
             }
 
-            if (!dtb)
+            if (!dtb) {
+								errprint("dtb is null\n");
                 goto done;
+						}
 
             start_addr = ctx->addr;
             break;
         case VMI_TM_PROCESS_DTB:
-            if (!vmi->arch_interface)
+            if (!vmi->arch_interface) {
+								errprint("vmi-arch interface is null\n");
                 goto done;
+						}
+
 
             dtb = ctx->dtb;
             start_addr = ctx->addr;
@@ -105,35 +121,46 @@ vmi_read(
         size_t read_len = 0;
 
         if (dtb) {
-            if (VMI_SUCCESS != vmi_pagetable_lookup_cache(vmi, dtb, start_addr + buf_offset, &paddr))
+            if (VMI_SUCCESS != vmi_pagetable_lookup_cache(vmi, dtb, start_addr + buf_offset, &paddr)){
+								errprint("1\n");
                 goto done;
+						}
         } else {
             paddr = start_addr + buf_offset;
         }
 
 
         /* access the memory */
+				errprint("paddr is %lu\n",(uint64_t) paddr);
+				errprint("vmi->page shift is  %lu\n",(uint64_t)vmi->page_shift);
         pfn = paddr >> vmi->page_shift;
         offset = (vmi->page_size - 1) & paddr;
         memory = vmi_read_page(vmi, pfn);
-        if (NULL == memory)
+				//errprint(" the mrmoy is %s\n", memory);
+        if (NULL == memory) {
+						errprint("2\n");
             goto done;
+				}
 
         /* determine how much we can read */
+        errprint("determine how much we can read\n");
         if ((offset + count) > vmi->page_size) {
             read_len = vmi->page_size - offset;
+						errprint("read_len = vmi->page_size - offset: read_len is %d \n", read_len);
         } else {
             read_len = count;
         }
 
         /* do the read */
-        memcpy(((char *) buf) + (addr_t) buf_offset, memory + (addr_t) offset, read_len);
+        errprint("do the read\n");
+       memcpy(((char *) buf) + (addr_t) buf_offset, memory + (addr_t) offset, read_len);
 
         /* set variables for next loop */
         count -= read_len;
         buf_offset += read_len;
     }
 
+        errprint("success with vmi_read\n");
     ret = VMI_SUCCESS;
 
 done:
@@ -158,6 +185,7 @@ vmi_read_pa(
         .addr = paddr
     };
 
+		errprint("vmi read pa\n");
     return vmi_read(vmi, &ctx, count, buf, bytes_read);
 }
 
@@ -176,6 +204,7 @@ vmi_read_va(
         .pid = pid
     };
 
+		errprint("vmi read  va\n");
     return vmi_read(vmi, &ctx, count, buf, bytes_read);
 }
 
@@ -192,6 +221,7 @@ vmi_read_ksym(
         .ksym = sym,
     };
 
+		errprint("vmi read  ksym\n");
     return vmi_read(vmi, &ctx, count, buf, bytes_read);
 }
 
@@ -202,6 +232,7 @@ vmi_read_8(vmi_instance_t vmi,
            const access_context_t *ctx,
            uint8_t * value)
 {
+		errprint("vmi read  8 \n");
     return vmi_read(vmi, ctx, 1, value, NULL);
 }
 
@@ -210,6 +241,7 @@ vmi_read_16(vmi_instance_t vmi,
             const access_context_t *ctx,
             uint16_t * value)
 {
+		errprint("vmi read  16 \n");
     return vmi_read(vmi, ctx, 2, value, NULL);
 }
 
@@ -219,6 +251,7 @@ vmi_read_32(
     const access_context_t *ctx,
     uint32_t * value)
 {
+		errprint("vmi read  va 32\n");
     return vmi_read(vmi, ctx, 4, value, NULL);
 }
 
@@ -228,6 +261,7 @@ vmi_read_64(
     const access_context_t *ctx,
     uint64_t * value)
 {
+		errprint("vmi read  64 \n");
     return vmi_read(vmi, ctx, 8, value, NULL);
 }
 
@@ -239,6 +273,7 @@ vmi_read_addr(
 {
     status_t ret = VMI_FAILURE;
 
+		errprint("vmi read  addr \n");
     switch (vmi->page_mode) {
         case VMI_PM_AARCH64:// intentional fall-through
         case VMI_PM_IA32E:
@@ -392,6 +427,7 @@ vmi_read_32_pa(
     addr_t paddr,
     uint32_t * value)
 {
+		errprint("vmi read pa 32 \n");
     return vmi_read_pa(vmi, paddr, 4, value, NULL);
 }
 
@@ -401,6 +437,7 @@ vmi_read_64_pa(
     addr_t paddr,
     uint64_t * value)
 {
+		errprint("vmi read pa 64 \n");
     return vmi_read_pa(vmi, paddr, 8, value, NULL);
 }
 
@@ -410,6 +447,8 @@ vmi_read_addr_pa(
     addr_t paddr,
     addr_t *value)
 {
+
+		errprint("vmi read pa addr \n");
     status_t ret = VMI_FAILURE;
 
     switch (vmi->page_mode) {
@@ -478,6 +517,7 @@ vmi_read_32_va(
     vmi_pid_t pid,
     uint32_t * value)
 {
+		errprint("vmi read 32 va\n");	
     return vmi_read_va(vmi, vaddr, pid, 4, value, NULL);
 }
 
