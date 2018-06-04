@@ -153,7 +153,7 @@ vmi_read(
 
         /* do the read */
         errprint("do the read\n");
-       memcpy(((char *) buf) + (addr_t) buf_offset, memory + (addr_t) offset, read_len);
+       //memcpy(((char *) buf) + (addr_t) buf_offset, memory + (addr_t) offset, read_len);
 
         /* set variables for next loop */
         count -= read_len;

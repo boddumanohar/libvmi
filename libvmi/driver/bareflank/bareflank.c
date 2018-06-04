@@ -341,7 +341,7 @@ bareflank_init(
 		// since bareflank accepts VMCALL from user space on Intel based systems,
 		// we don't need to create an wrapper. So, here we just get bareflank status.
 
-		errprint("");
+		errprint("\n");
 
     if ( HCALL_SUCCESS  != h_get_bareflank_status() ) {
 				g_free(bareflank);
@@ -380,11 +380,11 @@ void* h1_map_foreign_range(void *buffer, size_t size, size_t page_size, int prot
       :"rdi"
       );
 
-  asm("movq %0, %%rsi"
+  /*asm("movq %0, %%rsi"
       :
       :"a"(size)
       :"rsi"
-      );
+      );*/
 
 	asm("movq %0, %%rbx"
       :
@@ -392,14 +392,15 @@ void* h1_map_foreign_range(void *buffer, size_t size, size_t page_size, int prot
       :"rsi"
       );
 
-asm("movq %0, %%rcx"
+/*asm("movq %0, %%rcx"
       :
       :"a"(page_size)
       :"rsi"
-      );
+      );*/
 
 
 
+	errprint("going to mmap hypercall\n");
 	asm("mov $4, %eax");
 	asm("vmcall");
 
@@ -423,11 +424,14 @@ bareflank_get_memory_pfn(
     //bareflank_instance_t *bareflank = bareflank_get_instance(vmi);
     //void *memory = h_map_pfn(XC_PAGE_SIZE, prot, (unsigned long) pfn);
 			void *buffer = malloc(4096); //
-			void *size  = 4096; //
+			size_t size  = 4096; //
 			buffer = h1_map_foreign_range(buffer, size, 12, prot, (unsigned long) pfn);
+			//json_object *jobj = json_tokener_parse((char *)buffer);
 
-			char *output = buffer;
-			errprint("the output is %s\n",output);
+			//json_object *return_obj = NULL;
+			//json_object_object_get_ex(root,"map", &return_obj);
+			//uint64_t value = json_object_get_int64(return_obj);
+
     if (NULL == buffer) {
         dbprint(VMI_DEBUG_XEN, "--bareflank_get_memory_pfn failed on pfn=0x%"PRIx64"\n", pfn);
         return NULL;

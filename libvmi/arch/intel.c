@@ -570,9 +570,10 @@ status_t intel_init(vmi_instance_t vmi)
 
     if (!vmi->arch_interface) {
         vmi->arch_interface = g_malloc0(sizeof(struct arch_interface));
-        if ( !vmi->arch_interface )
+        if ( !vmi->arch_interface ) {
 						errprint(" arch_interface is null\n");
             return VMI_FAILURE;
+				}
     }
 
     if (vmi->page_mode == VMI_PM_LEGACY) {

@@ -610,6 +610,7 @@ page_mode_t vmi_init_paging(
 
     vmi->page_mode = VMI_PM_UNKNOWN;
 
+		errprint("doing arch init\n");
     if ( VMI_FAILURE == arch_init(vmi) )
         return VMI_PM_UNKNOWN;
 
