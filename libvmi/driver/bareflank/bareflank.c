@@ -431,9 +431,9 @@ bareflank_get_memory_pfn(
 			unsigned long *outbuf = buffer;
 			unsigned long *newbuf = calloc(size, sizeof(char));
 
-			for(int i=0;i<1024;i++)
-				newbuf[i] = outbuf[i];
-			//memcpy(newbuf,outbuf, size);
+			//for(int i=0;i<1024;i++)
+				//newbuf[i] = outbuf[i];
+			memcpy(newbuf,outbuf, 1024);
 
 			for(int i=0;i<1024;i++) {
 				errprint("%ld \n", outbuf[i]);	
