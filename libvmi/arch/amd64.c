@@ -261,11 +261,11 @@ GSList* get_va_pages_ia32e(vmi_instance_t vmi, addr_t dtb)
     uint64_t pml4e_index;
     for (pml4e_index = 0; pml4e_index < IA32E_ENTRIES_PER_PAGE; pml4e_index++, pml4e_location += entry_size) {
 
-				errprint("inside the for loop\n");
+				//errprint("inside the for loop\n");
         uint64_t pml4e_value = pml4_page[pml4e_index];
 
         if (!ENTRY_PRESENT(vmi->x86.transition_pages, pml4e_value)) {
-						errprint("entry not present\n");
+						//errprint("entry not present\n");
             continue;
         }
 

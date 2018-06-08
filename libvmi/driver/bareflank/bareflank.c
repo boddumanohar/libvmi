@@ -423,9 +423,25 @@ bareflank_get_memory_pfn(
 		errprint("in side bareflank_get_memory_pfn\n");
     //bareflank_instance_t *bareflank = bareflank_get_instance(vmi);
     //void *memory = h_map_pfn(XC_PAGE_SIZE, prot, (unsigned long) pfn);
-			void *buffer = malloc(4096); //
 			size_t size  = 4096; //
+			//void *buffer = malloc(size*sizeof(uint64_t)); // did not work
+			void *buffer = calloc(size, sizeof(char)); // using calloc because: freezing is due to uninitialized memory
 			buffer = h1_map_foreign_range(buffer, size, 12, prot, (unsigned long) pfn);
+
+			unsigned long *outbuf = buffer;
+			unsigned long *newbuf = calloc(size, sizeof(char));
+
+			for(int i=0;i<1024;i++)
+				newbuf[i] = outbuf[i];
+			//memcpy(newbuf,outbuf, size);
+
+			for(int i=0;i<1024;i++) {
+				errprint("%ld \n", outbuf[i]);	
+				errprint("%ld \n", newbuf[i]);	
+			}
+
+			//errprint("done\n");
+			//for(int i=0;i<4097;i++)
 			//json_object *jobj = json_tokener_parse((char *)buffer);
 
 			//json_object *return_obj = NULL;
@@ -440,7 +456,7 @@ bareflank_get_memory_pfn(
     }
 		errprint("done with  bareflank_get_memory_pfn\n");
 
-    return buffer;
+    return (void *)newbuf;
 }
 
 void *
