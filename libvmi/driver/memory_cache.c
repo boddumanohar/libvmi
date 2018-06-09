@@ -183,14 +183,14 @@ memory_cache_insert(
 
     gint64 *key = (gint64*)&paddr;
 		errprint("going to do g+hashtable lookup\n");
-    if ((entry = g_hash_table_lookup(vmi->memory_cache, key)) != NULL) {
+    /*if ((entry = g_hash_table_lookup(vmi->memory_cache, key)) != NULL) {
         dbprint(VMI_DEBUG_MEMCACHE, "--MEMORY cache hit 0x%"PRIx64"\n", paddr);
         return validate_and_return_data(vmi, entry);
-    } else {
+    } else {*/
 			errprint("going to do g_queue get length\n");
-        if (g_queue_get_length(vmi->memory_cache_lru) >= vmi->memory_cache_size_max) {
+        if (g_queue_get_length(vmi->memory_cache_lru) >= vmi->memory_cache_size_max) //{
             clean_cache(vmi);
-        }
+        //}
 
         dbprint(VMI_DEBUG_MEMCACHE, "--MEMORY cache set 0x%"PRIx64"\n", paddr);
 
@@ -223,7 +223,7 @@ memory_cache_insert(
         g_queue_push_head(vmi->memory_cache_lru, key2);
 
         return entry->data;
-    }
+    //}
 }
 
 void memory_cache_remove(
