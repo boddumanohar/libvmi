@@ -445,6 +445,8 @@ bareflank_get_memory_pfn(
 
 			//errprint("%s \n", (char *)buffer);
 			char *outbuf = buffer;
+			errprint(" the first is %c \n", outbuf[0]);
+
 			uint64_t *newbuf = malloc(4096);
 
 			//errprint("%s \n", outbuf);
