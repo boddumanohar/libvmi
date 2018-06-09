@@ -70,6 +70,9 @@ hcall_t h_get_vcpuregs(unsigned long vcpu, json_object **jobj)
 	//	return ret;
 	//}
 
+	char *tempbuf = buffer;
+	errprint(" temp buf %c \n", tempbuf[0]);
+
 	*jobj = json_tokener_parse((char *)buffer);
 	free(buffer);
 	return ret;
