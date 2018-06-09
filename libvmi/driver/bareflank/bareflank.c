@@ -108,7 +108,7 @@ static uint64_t parse_reg_value(const char *reg, json_object *root)
 	// parse the json and get the value of the key
 	
 	json_object *return_obj = NULL;
-	json_object_object_get_ex(root,reg, &return_obj);
+	json_object_object_get_ex(root,reg,&return_obj);
 	return json_object_get_int64(return_obj);
 
 }
@@ -372,7 +372,7 @@ bareflank_test(uint64_t domainid, const char *name)
 }
 
 
-void* h1_map_foreign_range(void *buffer, size_t size, size_t page_size, int prot, unsigned long pfn){
+void h1_map_foreign_range(void *buffer, size_t size, size_t page_size, int prot, unsigned long pfn){
 	// TODO: Functions for mapping foreign domain's memory
 		asm("movq %0, %%rdi"
 		  :
@@ -389,7 +389,7 @@ void* h1_map_foreign_range(void *buffer, size_t size, size_t page_size, int prot
 	asm("movq %0, %%rbx"
       :
       :"a"(pfn)
-      :"rsi"
+      :"rbx"
       );
 
 /*asm("movq %0, %%rcx"
@@ -404,14 +404,15 @@ void* h1_map_foreign_range(void *buffer, size_t size, size_t page_size, int prot
 	asm("mov $4, %eax");
 	asm("vmcall");
 
+			errprint("%s \n", (char*)buffer);
 	//TODO: set cpu affinity to normal mode
 
-	asm( "movq %%rdx, %0" // using rdx to return hypercall status
+	/*asm( "movq %%rdx, %0" // using rdx to return hypercall status
       : "=a" (buffer)
       );
-
+  */
 	
-	return buffer;
+	//return buffer;
 }
 
 void *
@@ -424,15 +425,39 @@ bareflank_get_memory_pfn(
 
 			size_t size  = 4096;
 
-			void *buffer = malloc(4096);
-			buffer = h1_map_foreign_range(buffer, size, 12, prot, (unsigned long) pfn);
+			void *buffer = malloc(size);
+			//h1_map_foreign_range(buffer, size, 12, prot, (unsigned long) pfn);
+			
+			asm("movq %0, %%rdi"
+					:
+					:"a"(buffer)
+					:"rdi"
+				 );
 
-			uint64_t *outbuf = buffer; // because omap.get() is of type unint64_t
+			asm("movq %0, %%rbx"
+					:
+					:"a"((unsigned long)pfn)
+					:"rbx"
+				 );
+
+			asm("mov $4, %eax");
+			asm("vmcall");
+
+			//errprint("%s \n", (char *)buffer);
+			char *outbuf = buffer;
 			uint64_t *newbuf = malloc(4096);
 
-			memcpy(newbuf, outbuf, 512); // 4096/8 = 512 blocks
+			//errprint("%s \n", outbuf);
+			json_object *root = json_tokener_parse(outbuf);
+			for(int i=0;i<256;i++) {
+				char key[4];
+				sprintf(key, "%d", i);
+				newbuf[i] = parse_reg_value(key, root);
+				//errprint("%ld ", newbuf[i]);
+				//errprint("%ld ", parse_reg_value("0", root));
+			}
 
-			errprint("0th value of the buffer after mmap call is %ld\n", newbuf[0]);
+			//errprint("0th value of the buffer after mmap call is %ld\n", newbuf[0]);
 
 		if (NULL == buffer) {
 			dbprint(VMI_DEBUG_XEN, "--bareflank_get_memory_pfn failed on pfn=0x%"PRIx64"\n", pfn);
