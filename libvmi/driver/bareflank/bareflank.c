@@ -444,20 +444,21 @@ bareflank_get_memory_pfn(
 			asm("vmcall");
 
 			//errprint("%s \n", (char *)buffer);
-			char *outbuf = buffer;
-			errprint(" the first is %c \n", outbuf[0]);
+			uint64_t *outbuf = buffer;
+			errprint(" the first is %ld \n", outbuf[0]);
 
 			uint64_t *newbuf = malloc(4096);
+			memcpy(newbuf, outbuf, 512); // 4096/8
 
 			//errprint("%s \n", outbuf);
-			json_object *root = json_tokener_parse(outbuf);
+			/*json_object *root = json_tokener_parse(outbuf);
 			for(int i=0;i<256;i++) {
 				char key[4];
 				sprintf(key, "%d", i);
 				newbuf[i] = parse_reg_value(key, root);
 				//errprint("%ld ", newbuf[i]);
 				//errprint("%ld ", parse_reg_value("0", root));
-			}
+			}*/
 
 			//errprint("0th value of the buffer after mmap call is %ld\n", newbuf[0]);
 
