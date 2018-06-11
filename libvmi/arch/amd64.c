@@ -344,6 +344,7 @@ GSList* get_va_pages_ia32e(vmi_instance_t vmi, addr_t dtb)
                     for (pte_index = 0; pte_index < IA32E_ENTRIES_PER_PAGE; pte_index++, pte_location += entry_size) {
                         uint64_t pte_value = pt_page[pte_index];
 
+												errprint("%ld is the pte_value \n", pte_value);
                         if (ENTRY_PRESENT(vmi->os_type, pte_value)) {
                             page_info_t *info = g_malloc0(sizeof(page_info_t));
                             if ( !info )
@@ -351,6 +352,7 @@ GSList* get_va_pages_ia32e(vmi_instance_t vmi, addr_t dtb)
 
                             info->vaddr = canonical_addr((pml4e_index << 39) | (pdpte_index << 30) |
                                                          (pgde_index << 21) | (pte_index << 12));
+														
                             info->paddr = get_paddr_ia32e(info->vaddr, pte_value);
                             info->size = VMI_PS_4KB;
                             info->x86_ia32e.pml4e_location = pml4e_location;

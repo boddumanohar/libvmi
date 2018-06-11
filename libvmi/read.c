@@ -41,7 +41,7 @@ vmi_read(
     void *buf,
     size_t *bytes_read)
 {
-		errprint("inside vmi read\n");
+		//errprint("inside vmi read\n");
     status_t ret = VMI_FAILURE;
     unsigned char *memory = NULL;
     addr_t start_addr = 0;
@@ -131,8 +131,8 @@ vmi_read(
 
 
         /* access the memory */
-				errprint("paddr is %lu\n",(uint64_t) paddr);
-				errprint("vmi->page shift is  %lu\n",(uint64_t)vmi->page_shift);
+				//errprint("paddr is %lu\n",(uint64_t) paddr);
+				//errprint("vmi->page shift is  %lu\n",(uint64_t)vmi->page_shift);
         pfn = paddr >> vmi->page_shift;
         offset = (vmi->page_size - 1) & paddr;
         memory = vmi_read_page(vmi, pfn);
@@ -143,7 +143,7 @@ vmi_read(
 				}
 
         /* determine how much we can read */
-        errprint("determine how much we can read\n");
+        //errprint("determine how much we can read\n");
         if ((offset + count) > vmi->page_size) {
             read_len = vmi->page_size - offset;
 						errprint("read_len = vmi->page_size - offset: read_len is %d \n", read_len);
@@ -152,12 +152,12 @@ vmi_read(
         }
 
         /* do the read */
-        errprint("do the read\n");
-				errprint(" buf_offset is %ld", buf_offset);
-				errprint(" offset is %ld", offset);
-				errprint(" read_len is %ld", read_len);
+        //jerrprint("do the read\n");
+				//errprint(" buf_offset is %ld", buf_offset);
+				//errprint(" offset is %ld", offset);
+				//errprint(" read_len is %ld", read_len);
 				//if (read_len < 4097){
-					 errprint("used memcpy\n");
+					 //errprint("used memcpy\n");
 					 memcpy(((char *) buf) + (addr_t) buf_offset, memory + (addr_t) offset, read_len);
 				//}
 
@@ -166,7 +166,7 @@ vmi_read(
         buf_offset += read_len;
     }
 
-        errprint("success with vmi_read\n");
+        ///errprint("success with vmi_read\n");
     ret = VMI_SUCCESS;
 
 done:
@@ -191,7 +191,7 @@ vmi_read_pa(
         .addr = paddr
     };
 
-		errprint("vmi read pa\n");
+		///errprint("vmi read pa\n");
     return vmi_read(vmi, &ctx, count, buf, bytes_read);
 }
 
@@ -210,7 +210,7 @@ vmi_read_va(
         .pid = pid
     };
 
-		errprint("vmi read  va\n");
+		//errprint("vmi read  va\n");
     return vmi_read(vmi, &ctx, count, buf, bytes_read);
 }
 
@@ -227,7 +227,7 @@ vmi_read_ksym(
         .ksym = sym,
     };
 
-		errprint("vmi read  ksym\n");
+		//errprint("vmi read  ksym\n");
     return vmi_read(vmi, &ctx, count, buf, bytes_read);
 }
 
@@ -238,7 +238,7 @@ vmi_read_8(vmi_instance_t vmi,
            const access_context_t *ctx,
            uint8_t * value)
 {
-		errprint("vmi read  8 \n");
+		//errprint("vmi read  8 \n");
     return vmi_read(vmi, ctx, 1, value, NULL);
 }
 
@@ -247,7 +247,7 @@ vmi_read_16(vmi_instance_t vmi,
             const access_context_t *ctx,
             uint16_t * value)
 {
-		errprint("vmi read  16 \n");
+		//errprint("vmi read  16 \n");
     return vmi_read(vmi, ctx, 2, value, NULL);
 }
 
@@ -257,7 +257,7 @@ vmi_read_32(
     const access_context_t *ctx,
     uint32_t * value)
 {
-		errprint("vmi read  va 32\n");
+		//errprint("vmi read  va 32\n");
     return vmi_read(vmi, ctx, 4, value, NULL);
 }
 
@@ -267,7 +267,7 @@ vmi_read_64(
     const access_context_t *ctx,
     uint64_t * value)
 {
-		errprint("vmi read  64 \n");
+		//errprint("vmi read  64 \n");
     return vmi_read(vmi, ctx, 8, value, NULL);
 }
 
@@ -279,7 +279,7 @@ vmi_read_addr(
 {
     status_t ret = VMI_FAILURE;
 
-		errprint("vmi read  addr \n");
+		//errprint("vmi read  addr \n");
     switch (vmi->page_mode) {
         case VMI_PM_AARCH64:// intentional fall-through
         case VMI_PM_IA32E:
@@ -307,6 +307,7 @@ vmi_read_str(
     vmi_instance_t vmi,
     const access_context_t *ctx)
 {
+	errprint("inside vmi_read_str\n");
     unsigned char *memory = NULL;
     char *rtnval = NULL;
     addr_t addr = 0;
@@ -392,6 +393,8 @@ vmi_read_str(
         len += read_len;
         rtnval[len] = '\0';
     }
+		errprint("done with vmi_read_str: %ld is len\n", len);
+		errprint("done with vmi_read_str: %ld is read_len\n", read_len);
 
     return rtnval;
 }

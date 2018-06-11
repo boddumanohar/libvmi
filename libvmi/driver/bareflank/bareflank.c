@@ -421,7 +421,7 @@ bareflank_get_memory_pfn(
     addr_t pfn,
     int prot)
 {
-		errprint("in side bareflank_get_memory_pfn\n");
+//		errprint("in side bareflank_get_memory_pfn\n");
 
 			size_t size  = 4096;
 
@@ -445,10 +445,10 @@ bareflank_get_memory_pfn(
 
 			//errprint("%s \n", (char *)buffer);
 			uint64_t *outbuf = buffer;
-			errprint(" the first is %ld \n", outbuf[0]);
+			errprint("for pfn %ld the first entry is %ld \n", pfn, outbuf[0]);
 
 			uint64_t *newbuf = malloc(4096);
-			memcpy(newbuf, outbuf, 512); // 4096/8
+			memcpy(newbuf, outbuf, 4096); // 4096/8
 
 			//errprint("%s \n", outbuf);
 			/*json_object *root = json_tokener_parse(outbuf);
@@ -468,7 +468,7 @@ bareflank_get_memory_pfn(
     } else {
         dbprint(VMI_DEBUG_XEN, "--bareflank_get_memory_pfn success on pfn=0x%"PRIx64"\n", pfn);
     }
-		errprint("done with  bareflank_get_memory_pfn\n");
+//		errprint("done with  bareflank_get_memory_pfn\n");
 
     return (void *)newbuf;
     //return buffer; 
@@ -482,7 +482,8 @@ bareflank_get_memory(
 {
     addr_t pfn = paddr >> vmi->page_shift;
 
-    return bareflank_get_memory_pfn(vmi, pfn, PROT_READ);
+		//errprint("for paddr %ld the pfn is %ld \n", paddr, pfn);
+    return bareflank_get_memory_pfn(vmi, paddr, PROT_READ);
 }
 
 void

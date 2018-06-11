@@ -172,32 +172,32 @@ memory_cache_insert(
     vmi_instance_t vmi,
     addr_t paddr)
 {
-		errprint("at 170 memory cache insert\n");
+		//errprint("at 170 memory cache insert\n");
     memory_cache_entry_t entry = NULL;
     addr_t paddr_aligned = paddr & ~(((addr_t) vmi->page_size) - 1);
 
     if (paddr != paddr_aligned) {
-        errprint("Memory cache request for non-aligned page\n");
+        //errprint("Memory cache request for non-aligned page\n");
         return NULL;
     }
 
     gint64 *key = (gint64*)&paddr;
-		errprint("going to do g+hashtable lookup\n");
-    /*if ((entry = g_hash_table_lookup(vmi->memory_cache, key)) != NULL) {
+		//errprint("going to do g+hashtable lookup\n");
+    if ((entry = g_hash_table_lookup(vmi->memory_cache, key)) != NULL) {
         dbprint(VMI_DEBUG_MEMCACHE, "--MEMORY cache hit 0x%"PRIx64"\n", paddr);
         return validate_and_return_data(vmi, entry);
-    } else {*/
-			errprint("going to do g_queue get length\n");
+    } else { 
+			//errprint("going to do g_queue get length\n");
         if (g_queue_get_length(vmi->memory_cache_lru) >= vmi->memory_cache_size_max) //{
             clean_cache(vmi);
         //}
 
         dbprint(VMI_DEBUG_MEMCACHE, "--MEMORY cache set 0x%"PRIx64"\n", paddr);
 
-				errprint("creating a new entry\n");
+				//errprint("creating a new entry\n");
         entry = create_new_entry(vmi, paddr, vmi->page_size);
         if (!entry) {
-            errprint("create_new_entry failed\n");
+            //errprint("create_new_entry failed\n");
             return 0;
         }
 
@@ -215,15 +215,15 @@ memory_cache_insert(
         }
 
         *key = paddr;
-				errprint("g+hash table insert, vmi-> memorycache , key entry\n");
+				//errprint("g+hash table insert, vmi-> memorycache , key entry\n");
         g_hash_table_insert(vmi->memory_cache, key, entry);
 
-				errprint("g+queue push head, vmi-> memorycache , key entry\n");
+				//errprint("g+queue push head, vmi-> memorycache , key entry\n");
         *key2 = paddr;
         g_queue_push_head(vmi->memory_cache_lru, key2);
 
         return entry->data;
-    //}
+    }
 }
 
 void memory_cache_remove(

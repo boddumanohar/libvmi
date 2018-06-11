@@ -295,7 +295,8 @@ status_t init_kaslr(vmi_instance_t vmi)
                 case VMI_PM_IA32E:
                     if ( VMI_GET_BIT(info->vaddr, 47) ) {
 												errprint("vmi_pa_IA32E\n");
-                        ret = init_task_kaslr_test(vmi, info->vaddr);
+												ret = VMI_SUCCESS;
+                        //ret = init_task_kaslr_test(vmi, info->vaddr);
 												
 										}
                     break;
