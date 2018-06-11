@@ -153,9 +153,9 @@ vmi_read(
 
         /* do the read */
         //jerrprint("do the read\n");
-				//errprint(" buf_offset is %ld", buf_offset);
-				//errprint(" offset is %ld", offset);
-				//errprint(" read_len is %ld", read_len);
+				errprint(" buf_offset is %ld", buf_offset);
+				errprint(" offset is %ld", offset);
+				errprint(" read_len is %ld", read_len);
 				//if (read_len < 4097){
 					 //errprint("used memcpy\n");
 					 memcpy(((char *) buf) + (addr_t) buf_offset, memory + (addr_t) offset, read_len);
@@ -166,7 +166,7 @@ vmi_read(
         buf_offset += read_len;
     }
 
-        ///errprint("success with vmi_read\n");
+        errprint("success with vmi_read\n");
     ret = VMI_SUCCESS;
 
 done:
@@ -368,8 +368,12 @@ vmi_read_str(
 
         /* access the memory */
         pfn = paddr >> vmi->page_shift;
+				
         offset = (vmi->page_size - 1) & paddr;
+				errprint("str offset is %ld \n", offset);
         memory = vmi_read_page(vmi, pfn);
+				errprint("str memory is %s \n", (char *)memory); 
+				errprint("str memory in long is  %ld \n", (uint64_t)memory[0]); 
         if (NULL == memory) {
             return rtnval;
         }
@@ -377,6 +381,7 @@ vmi_read_str(
         /* Count new non-null characters */
         read_len = 0;
         while (offset + read_len < vmi->page_size) {
+					errprint(" offset+read_len < vmi->page_size\n");
             if (memory[offset + read_len] == '\0') {
                 read_more = 0;
                 break;
@@ -436,7 +441,7 @@ vmi_read_32_pa(
     addr_t paddr,
     uint32_t * value)
 {
-		errprint("vmi read pa 32 \n");
+		//errprint("vmi read pa 32 \n");
     return vmi_read_pa(vmi, paddr, 4, value, NULL);
 }
 
@@ -446,7 +451,7 @@ vmi_read_64_pa(
     addr_t paddr,
     uint64_t * value)
 {
-		errprint("vmi read pa 64 \n");
+		//errprint("vmi read pa 64 \n");
     return vmi_read_pa(vmi, paddr, 8, value, NULL);
 }
 
@@ -457,7 +462,7 @@ vmi_read_addr_pa(
     addr_t *value)
 {
 
-		errprint("vmi read pa addr \n");
+		//errprint("vmi read pa addr \n");
     status_t ret = VMI_FAILURE;
 
     switch (vmi->page_mode) {
@@ -526,7 +531,7 @@ vmi_read_32_va(
     vmi_pid_t pid,
     uint32_t * value)
 {
-		errprint("vmi read 32 va\n");	
+		//errprint("vmi read 32 va\n");	
     return vmi_read_va(vmi, vaddr, pid, 4, value, NULL);
 }
 

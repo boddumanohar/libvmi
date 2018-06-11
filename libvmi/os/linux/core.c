@@ -238,15 +238,18 @@ static status_t init_task_kaslr_test(vmi_instance_t vmi, addr_t page_vaddr)
     };
 
     ctx.addr = init_task + linux_instance->pid_offset;
+		errprint("vmi read_32 \n");
     if ( VMI_FAILURE == vmi_read_32(vmi, &ctx, &pid) )
         return ret;
-
+	
+		errprint("vmi_read 32 ended\n");
     if ( pid )
         return ret;
 
     ctx.addr = init_task + linux_instance->name_offset;
     char* init_task_name = vmi_read_str(vmi, &ctx);
 
+		errprint("init_task_name is : %s : \n", init_task_name);
     if ( init_task_name && !strncmp("swapper", init_task_name, 7) )
         ret = VMI_SUCCESS;
 
@@ -287,16 +290,16 @@ status_t init_kaslr(vmi_instance_t vmi)
 				errprint("inside loop\n");
         page_info_t *info = loop->data;
 
-				errprint("going to check linux_instance->kaslr_offset\n");
+				//errprint("going to check linux_instance->kaslr_offset\n");
         if ( !linux_instance->kaslr_offset ) {
-				errprint("check linux_instance->kaslr_offset done\n");
+				//errprint("check linux_instance->kaslr_offset done\n");
             switch (vmi->page_mode) {
                 case VMI_PM_AARCH64:
                 case VMI_PM_IA32E:
                     if ( VMI_GET_BIT(info->vaddr, 47) ) {
-												errprint("vmi_pa_IA32E\n");
-												ret = VMI_SUCCESS;
-                        //ret = init_task_kaslr_test(vmi, info->vaddr);
+												//errprint("vmi_pa_IA32E\n");
+												//ret = VMI_SUCCESS;
+                        ret = init_task_kaslr_test(vmi, info->vaddr);
 												
 										}
                     break;
@@ -307,9 +310,11 @@ status_t init_kaslr(vmi_instance_t vmi)
             };
 
             if ( VMI_SUCCESS == ret ) {
+								errprint("ret is success\n");
                 linux_instance->kaslr_offset = info->vaddr - (vmi->init_task & ~VMI_BIT_MASK(0,11));
                 vmi->init_task += linux_instance->kaslr_offset;
                 dbprint(VMI_DEBUG_MISC, "**calculated KASLR offset: 0x%"PRIx64"\n", linux_instance->kaslr_offset);
+                errprint( "**calculated KASLR offset: 0x%"PRIx64"\n", linux_instance->kaslr_offset);
             }
         }
 
