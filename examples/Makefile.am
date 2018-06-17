@@ -11,7 +11,7 @@ AM_CFLAGS += -Wno-missing-field-initializers -Wno-unused-parameter
 endif
 
 AM_LDFLAGS = -L$(top_builddir)/libvmi/.libs/
-LDADD = -lvmi -lm $(LIBS) $(GLIB_LIBS)
+LDADD = -lvmi -lm -ljson-c $(LIBS) $(GLIB_LIBS)
 
 bin_PROGRAMS = vmi-process-list \
                vmi-module-list \
