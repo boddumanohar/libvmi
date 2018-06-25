@@ -444,15 +444,15 @@ bareflank_get_memory_pfn(
 			asm("vmcall");
 
 			//errprint("%s \n", (char *)buffer);
-			//uint64_t *outbuf = buffer;
+			uint64_t *outbuf = buffer;
 			//errprint("for pfn %ld the first entry is %ld \n", pfn, (uint64_t)outbuf[0]);
 
-			//uint64_t *newbuf = malloc(4096);
+			uint64_t *newbuf = malloc(4096);
 			//errprint("doing memcpy in bareflank get memory \n");
 
 
 
-			//memcpy(newbuf, outbuf, 4096); // 4096/8
+			memcpy(newbuf, outbuf, 512); // 4096/8
 
 			//errprint("%s \n", outbuf);
 			/*json_object *root = json_tokener_parse(outbuf);
@@ -474,8 +474,8 @@ bareflank_get_memory_pfn(
     }
 //		errprint("done with  bareflank_get_memory_pfn\n");
 
-    //return (void *)newbuf;
-    return buffer; 
+    return (void *)newbuf;
+    //return buffer; 
 }
 
 void *
