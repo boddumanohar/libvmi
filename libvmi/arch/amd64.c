@@ -234,7 +234,6 @@ done:
 GSList* get_va_pages_ia32e(vmi_instance_t vmi, addr_t dtb)
 {
 
-		errprint("started get va pages ia32e\n");
     GSList *ret = NULL;
     uint8_t entry_size = 0x8;
 
@@ -250,31 +249,20 @@ GSList* get_va_pages_ia32e(vmi_instance_t vmi, addr_t dtb)
 
     addr_t pml4e_location = dtb & VMI_BIT_MASK(12,51);
 
-			errprint("started at at 1\n");
-
-    if (VMI_FAILURE == vmi_read_pa(vmi, pml4e_location, VMI_PS_4KB, pml4_page, NULL)) {
-			errprint(" fail at 1\n");
+    if (VMI_FAILURE == vmi_read_pa(vmi, pml4e_location, VMI_PS_4KB, pml4_page, NULL))
         goto done;
-		}
-
-        
-			errprint("0th pml4e_value is %ld \n", pml4_page[0]);
 
     uint64_t pml4e_index;
     for (pml4e_index = 0; pml4e_index < IA32E_ENTRIES_PER_PAGE; pml4e_index++, pml4e_location += entry_size) {
 
-				//errprint("inside the for loop\n");
         uint64_t pml4e_value = pml4_page[pml4e_index];
 
-				//errprint("pml4e_value is %ld \n", pml4e_value);
         if (!ENTRY_PRESENT(vmi->x86.transition_pages, pml4e_value)) {
-						//errprint("entry not present\n");
             continue;
         }
 
         uint64_t pdpte_location = pml4e_value & VMI_BIT_MASK(12,51);
 
-				errprint(" getting pdgpte_location \n");
         if (VMI_FAILURE == vmi_read_pa(vmi, pdpte_location, VMI_PS_4KB, pdpt_page, NULL))
             continue;
 
@@ -305,8 +293,6 @@ GSList* get_va_pages_ia32e(vmi_instance_t vmi, addr_t dtb)
 
             uint64_t pgd_location = pdpte_value & VMI_BIT_MASK(12,51);
 
-						
-						errprint(" getting pdgd_location \n");
             if (VMI_FAILURE == vmi_read_pa(vmi, pgd_location, VMI_PS_4KB, pgd_page, NULL))
                 continue;
 
@@ -344,7 +330,6 @@ GSList* get_va_pages_ia32e(vmi_instance_t vmi, addr_t dtb)
                     for (pte_index = 0; pte_index < IA32E_ENTRIES_PER_PAGE; pte_index++, pte_location += entry_size) {
                         uint64_t pte_value = pt_page[pte_index];
 
-												errprint("%ld is the pte_value \n", pte_value);
                         if (ENTRY_PRESENT(vmi->os_type, pte_value)) {
                             page_info_t *info = g_malloc0(sizeof(page_info_t));
                             if ( !info )
@@ -352,7 +337,6 @@ GSList* get_va_pages_ia32e(vmi_instance_t vmi, addr_t dtb)
 
                             info->vaddr = canonical_addr((pml4e_index << 39) | (pdpte_index << 30) |
                                                          (pgde_index << 21) | (pte_index << 12));
-														
                             info->paddr = get_paddr_ia32e(info->vaddr, pte_value);
                             info->size = VMI_PS_4KB;
                             info->x86_ia32e.pml4e_location = pml4e_location;
@@ -384,7 +368,6 @@ done:
 status_t amd64_init(vmi_instance_t vmi)
 {
 
-	errprint("doing amd64_init \n");
     if (!vmi->arch_interface) {
         vmi->arch_interface = g_malloc0(sizeof(struct arch_interface));
         if ( !vmi->arch_interface )
@@ -392,7 +375,6 @@ status_t amd64_init(vmi_instance_t vmi)
     }
 
     vmi->arch_interface->v2p = v2p_ia32e;
-		errprint("arch_init is ia32e");
     vmi->arch_interface->get_va_pages = get_va_pages_ia32e;
 
     return VMI_SUCCESS;

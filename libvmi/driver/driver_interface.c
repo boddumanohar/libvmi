@@ -50,6 +50,7 @@
 status_t driver_init_mode(const char *name, uint64_t domainid, vmi_mode_t *mode)
 {
     unsigned long count = 0;
+
     /* see what systems are accessable */
 #if ENABLE_XEN == 1
     if (VMI_SUCCESS == xen_test(domainid, name)) {
@@ -72,13 +73,14 @@ status_t driver_init_mode(const char *name, uint64_t domainid, vmi_mode_t *mode)
         count++;
     }
 #endif
-//#if ENABLE_BARELFLANK == 1
+#if ENABLE_BAREFLANK == 1
     if (VMI_SUCCESS == bareflank_test(domainid, name)) {
         dbprint(VMI_DEBUG_DRIVER, "--found Bareflank\n");
         *mode = VMI_BAREFLANK;
         count++;
     }
-//#endif
+#endif
+
     /* if we didn't see exactly one system, report error */
     if (count == 0) {
         errprint("Could not find a live guest VM or file to use.\n");

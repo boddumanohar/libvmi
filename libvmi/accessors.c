@@ -436,15 +436,9 @@ vmi_read_page (vmi_instance_t vmi, addr_t frame_num)
 
 GSList* vmi_get_va_pages(vmi_instance_t vmi, addr_t dtb)
 {
-		errprint("hey just got here!!\n");
     if (vmi->arch_interface && vmi->arch_interface->get_va_pages) {
-        errprint("getting arch interface get va pages\n");
-        GList* ret =  vmi->arch_interface->get_va_pages(vmi, dtb);
-				if (ret == NULL)
-					errprint("get_va_pages returned null\n");
-				return ret;
+        return vmi->arch_interface->get_va_pages(vmi, dtb);
     } else {
-        errprint("Invalid or not supported paging mode during get_va_pages\n");
         dbprint(VMI_DEBUG_PTLOOKUP, "Invalid or not supported paging mode during get_va_pages\n");
         return NULL;
     }

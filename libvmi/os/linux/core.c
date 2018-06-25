@@ -227,7 +227,6 @@ done:
 
 static status_t init_task_kaslr_test(vmi_instance_t vmi, addr_t page_vaddr)
 {
-		errprint("inside init_task_kaslr test\n");
     status_t ret = VMI_FAILURE;
     uint32_t pid;
     addr_t init_task = page_vaddr + (vmi->init_task & VMI_BIT_MASK(0,11));
@@ -238,23 +237,19 @@ static status_t init_task_kaslr_test(vmi_instance_t vmi, addr_t page_vaddr)
     };
 
     ctx.addr = init_task + linux_instance->pid_offset;
-		errprint("vmi read_32 \n");
     if ( VMI_FAILURE == vmi_read_32(vmi, &ctx, &pid) )
         return ret;
-	
-		errprint("vmi_read 32 ended\n");
+
     if ( pid )
         return ret;
 
     ctx.addr = init_task + linux_instance->name_offset;
     char* init_task_name = vmi_read_str(vmi, &ctx);
 
-		errprint("init_task_name is : %s : \n", init_task_name);
     if ( init_task_name && !strncmp("swapper", init_task_name, 7) )
         ret = VMI_SUCCESS;
 
     free(init_task_name);
-		errprint("done with kaslr test\n");
     return ret;
 }
 
@@ -263,7 +258,6 @@ status_t init_kaslr(vmi_instance_t vmi)
     /*
      * Let's check if we can translate init_task first as is.
      */
-		errprint("inside init_kaslr\n:");
     uint32_t test;
     access_context_t ctx = {
         .translate_mechanism = VMI_TM_PROCESS_DTB,
@@ -271,59 +265,40 @@ status_t init_kaslr(vmi_instance_t vmi)
         .addr = vmi->init_task
     };
 
-		errprint("vmi read 32\n:");
     if ( VMI_SUCCESS == vmi_read_32(vmi, &ctx, &test) )
         return VMI_SUCCESS;
 
     status_t ret = VMI_FAILURE;
     linux_instance_t linux_instance = vmi->os_data;
-		errprint("vmiget va pages \n:");
     GSList *loop, *pages = vmi_get_va_pages(vmi, vmi->kpgd);
     loop = pages;
-		if (loop == NULL) 
-			errprint("its null baby !!\n");
-
-		errprint("going to while loop\n");
-
     while (loop) {
-				
-				errprint("inside loop\n");
         page_info_t *info = loop->data;
 
-				//errprint("going to check linux_instance->kaslr_offset\n");
         if ( !linux_instance->kaslr_offset ) {
-				//errprint("check linux_instance->kaslr_offset done\n");
             switch (vmi->page_mode) {
                 case VMI_PM_AARCH64:
                 case VMI_PM_IA32E:
-                    if ( VMI_GET_BIT(info->vaddr, 47) ) {
-												//errprint("vmi_pa_IA32E\n");
-												//ret = VMI_SUCCESS;
+                    if ( VMI_GET_BIT(info->vaddr, 47) )
                         ret = init_task_kaslr_test(vmi, info->vaddr);
-												
-										}
                     break;
                 default:
-												errprint("default\n");
                     ret = init_task_kaslr_test(vmi, info->vaddr);
                     break;
             };
 
             if ( VMI_SUCCESS == ret ) {
-								errprint("ret is success\n");
                 linux_instance->kaslr_offset = info->vaddr - (vmi->init_task & ~VMI_BIT_MASK(0,11));
                 vmi->init_task += linux_instance->kaslr_offset;
                 dbprint(VMI_DEBUG_MISC, "**calculated KASLR offset: 0x%"PRIx64"\n", linux_instance->kaslr_offset);
-                errprint( "**calculated KASLR offset: 0x%"PRIx64"\n", linux_instance->kaslr_offset);
             }
         }
 
         g_free(info);
         loop = loop->next;
     }
-		errprint("1 labam ledu\n");
+
     g_slist_free(pages);
-		errprint("labam ledu\n");
     return ret;
 }
 

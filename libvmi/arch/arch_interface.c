@@ -67,6 +67,5 @@ status_t arch_init(vmi_instance_t vmi)
         vmi->page_mode = VMI_PM_UNKNOWN;
     }
 
-		errprint("done with aarch init\n");
     return ret;
 }

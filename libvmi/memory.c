@@ -74,7 +74,7 @@ status_t probe_memory_layout_x86(vmi_instance_t vmi, unsigned long vcpu, page_mo
         goto _exit;
     }
 
-    /* PAE Flag --> CR4, bit 5 */
+    /* PSE Flag --> CR4, bit 5 */
     pae = VMI_GET_BIT(cr4, 5);
     dbprint(VMI_DEBUG_CORE, "**set pae = %d\n", pae);
 
@@ -85,7 +85,6 @@ status_t probe_memory_layout_x86(vmi_instance_t vmi, unsigned long vcpu, page_mo
     if (VMI_SUCCESS == driver_get_vcpureg(vmi, &efer, MSR_EFER, vcpu)) {
         lme = VMI_GET_BIT(efer, 8);
         dbprint(VMI_DEBUG_CORE, "**set lme = %d\n", lme);
-        errprint("**set lme = %d\n", lme);
     } else if ( vmi->vm_type == PV64 ) {
         lme = 1;
         dbprint(VMI_DEBUG_CORE, "**set lme = %d\n", lme);
@@ -106,11 +105,9 @@ status_t probe_memory_layout_x86(vmi_instance_t vmi, unsigned long vcpu, page_mo
     // PAE == 1; determine IA-32e or PAE
     else if (lme) {    // PAE == 1, LME == 1
         dbprint(VMI_DEBUG_CORE, "**IA-32e paging\n");
-        errprint("**IA-32e paging\n");
         pm = VMI_PM_IA32E;
         cr3 &= 0xFFFFFFFFFFFFF000ull;
     } else {  // PAE == 1, LME == 0
-        //errprint("**PAE paging\n");
         dbprint(VMI_DEBUG_CORE, "**PAE paging\n");
         pm = VMI_PM_PAE;
         cr3 &= 0xFFFFFFE0;
