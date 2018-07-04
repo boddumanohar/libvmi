@@ -10,6 +10,7 @@
 #include "driver/bareflank/bareflank_private.h"
 
 #include <sched.h>
+#include <unistd.h>
 
 typedef enum hcall{ // to check hypercall status
 	HCALL_SUCCESS,
@@ -302,7 +303,7 @@ bareflank_read_page(
     vmi_instance_t vmi,
     addr_t page)
 {
-		errprint("inside bareflank read page\n");
+		//errprint("inside bareflank read page\n");
     addr_t paddr = page << vmi->page_shift;
 
     return memory_cache_insert(vmi, paddr);
@@ -413,6 +414,23 @@ void h1_map_foreign_range(void *buffer, size_t size, size_t page_size, int prot,
 	
 	//return buffer;
 }
+void h_lookup(addr_t vaddr, addr_t *paddr){
+	
+				asm("movq %0, %%rdi"
+					:
+					:"a"(vaddr)
+					:"rdi"
+				 );
+	asm("mov $6, %eax");
+	asm("vmcall");
+
+	      asm( "movq %%rdx, %0" // using rdx to return hypercall status
+	      : "=a" (*paddr)
+	      );
+
+	return;
+
+}
 
 void *
 bareflank_get_memory_pfn(
@@ -420,17 +438,19 @@ bareflank_get_memory_pfn(
     addr_t pfn,
     int prot)
 {
-		errprint("in side bareflank_get_memory_pfn\n");
-		errprint("_get_memory_pfn for pfn %ld \n", pfn);
+			void *buffer = memset(malloc(4096*3),0, 4096*3);
+			addr_t vaddr = buffer;
+			addr_t paddr;
+			// get start vaddr of the next page
+			vaddr = (vaddr - 0x160) + 0x1000; // vaddr - size_of_malloc_header + 4096
+			h_lookup(vaddr, &paddr);
 
-			size_t size  = 4096;
+			// now paddr is the start of a fresh page
+			errprint("vaddr %p - gpa %p \n", vaddr, paddr);
 
-			void *buffer = malloc(size);
-			//h1_map_foreign_range(buffer, size, 12, prot, (unsigned long) pfn);
-			
-			asm("movq %0, %%rdi"
+				asm("movq %0, %%rdi"
 					:
-					:"a"(buffer)
+					:"a"(paddr)
 					:"rdi"
 				 );
 
@@ -440,42 +460,20 @@ bareflank_get_memory_pfn(
 					:"rbx"
 				 );
 
-			asm("mov $4, %eax");
+			asm("mov $5, %eax");
 			asm("vmcall");
 
-			//errprint("%s \n", (char *)buffer);
-			uint64_t *outbuf = buffer;
-			//errprint("for pfn %ld the first entry is %ld \n", pfn, (uint64_t)outbuf[0]);
-
-			uint64_t *newbuf = malloc(4096);
-			//errprint("doing memcpy in bareflank get memory \n");
-
-
-
-			memcpy(newbuf, outbuf, 512); // 4096/8
-
-			//errprint("%s \n", outbuf);
-			/*json_object *root = json_tokener_parse(outbuf);
-			for(int i=0;i<256;i++) {
-				char key[4];
-				sprintf(key, "%d", i);
-				newbuf[i] = parse_reg_value(key, root);
-				//errprint("%ld ", newbuf[i]);
-				//errprint("%ld ", parse_reg_value("0", root));
-			}*/
-
-			//errprint("0th value of the buffer after mmap call is %ld\n", newbuf[0]);
-
+			void *outbuf = vaddr;
+			void *newbuf = malloc(4096);
+			memcpy(newbuf, outbuf, 4096); // 4096/8
 		if (NULL == buffer) {
 			dbprint(VMI_DEBUG_XEN, "--bareflank_get_memory_pfn failed on pfn=0x%"PRIx64"\n", pfn);
 			return NULL;
     } else {
         dbprint(VMI_DEBUG_XEN, "--bareflank_get_memory_pfn success on pfn=0x%"PRIx64"\n", pfn);
     }
-//		errprint("done with  bareflank_get_memory_pfn\n");
 
     return (void *)newbuf;
-    //return buffer; 
 }
 
 void *
