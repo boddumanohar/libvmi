@@ -246,6 +246,8 @@ static status_t init_task_kaslr_test(vmi_instance_t vmi, addr_t page_vaddr)
     ctx.addr = init_task + linux_instance->name_offset;
     char* init_task_name = vmi_read_str(vmi, &ctx);
 
+    errprint("Init task name is :%s:", init_task_name);
+
     if ( init_task_name && !strncmp("swapper", init_task_name, 7) )
         ret = VMI_SUCCESS;
 

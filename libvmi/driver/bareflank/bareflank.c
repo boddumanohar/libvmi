@@ -438,19 +438,13 @@ bareflank_get_memory_pfn(
     addr_t pfn,
     int prot)
 {
-			void *buffer = memset(malloc(4096*3),0, 4096*3);
-			addr_t vaddr = buffer;
-			addr_t paddr;
-			// get start vaddr of the next page
-			vaddr = (vaddr - 0x160) + 0x1000; // vaddr - size_of_malloc_header + 4096
-			h_lookup(vaddr, &paddr);
+			//void *buffer = memset(malloc(1024),0, 1024);
+			void *buffer = aligned_alloc(4096,4096); 
+			memset(buffer,0,4096);
+			errprint("buffer is %p \n", buffer);
 
-			// now paddr is the start of a fresh page
-			errprint("vaddr %p - gpa %p \n", vaddr, paddr);
-
-				asm("movq %0, %%rdi"
-					:
-					:"a"(paddr)
+				asm("movq %0, %%rdi" :
+					:"a"(buffer)
 					:"rdi"
 				 );
 
@@ -460,12 +454,9 @@ bareflank_get_memory_pfn(
 					:"rbx"
 				 );
 
-			asm("mov $5, %eax");
+			asm("mov $4, %eax");
 			asm("vmcall");
 
-			void *outbuf = vaddr;
-			void *newbuf = malloc(4096);
-			memcpy(newbuf, outbuf, 4096); // 4096/8
 		if (NULL == buffer) {
 			dbprint(VMI_DEBUG_XEN, "--bareflank_get_memory_pfn failed on pfn=0x%"PRIx64"\n", pfn);
 			return NULL;
@@ -473,7 +464,7 @@ bareflank_get_memory_pfn(
         dbprint(VMI_DEBUG_XEN, "--bareflank_get_memory_pfn success on pfn=0x%"PRIx64"\n", pfn);
     }
 
-    return (void *)newbuf;
+    return (void *)buffer;
 }
 
 void *
