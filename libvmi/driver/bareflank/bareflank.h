@@ -60,7 +60,7 @@ driver_bareflank_setup(vmi_instance_t vmi)
     driver.get_vcpuregs_ptr = &bareflank_get_vcpuregs;
 		driver.set_vcpureg_ptr = &bareflank_set_vcpureg;
     driver.set_vcpuregs_ptr = &bareflank_set_vcpuregs;
-		driver.read_page_ptr = &bareflank_read_page;
+		//driver.read_page_ptr = &bareflank_read_page;
 		
 		//driver.write_ptr = &xen_write;
     //driver.is_pv_ptr = &xen_is_pv; will not be implemented
